@@ -13,6 +13,8 @@ import chatRoutes from "./routes/chatRoutes";
 import messageRoutes from "./routes/messageRoutes";
 import connectionRequestRoutes from "./routes/connectionRequestRoutes";
 
+console.log("process.env.NODE_ENV",process.env.NODE_ENV);
+
 const PORT = process.env.PORT || 4000;
 
 const app = express();
