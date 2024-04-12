@@ -118,8 +118,11 @@ export const changePassword = async (req:Request, res:Response) => {
 
 
 export const logout=(req:Request, res:Response)=>{
+  console.log("logout controller")
     res.cookie("auth_token","",{
-      expires:new Date(0)
+      sameSite:process.env.NODE_ENV === "production" ? "none":undefined,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 1,
     });
     res.send();
   }
