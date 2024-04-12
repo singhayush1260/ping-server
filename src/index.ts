@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
+import { Server } from "socket.io";
 import {v2 as cloudinary} from "cloudinary";
 import connectDB from "./utils/connectDB";
 
@@ -40,8 +41,41 @@ app.use("/api/message", messageRoutes);
 app.use("/api/connection-request", connectionRequestRoutes);
 
 connectDB(process.env.MONGODB_URI as string);
-
 const server = app.listen(PORT, () => {
   console.log(`Server started at PORT ${PORT}`);
 });
 
+const io = new Server(server, {
+  pingTimeout: 60000,
+  cors: {
+    origin: process.env.CLIENT_URL as string,
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("A user connected");
+
+  socket.on("join room", (chatId) => {
+    socket.join(chatId); // User joins the chat room
+    console.log(`User ${socket.id} joined room: ${chatId}`);
+  });
+
+  socket.on("new message", (data) => {
+    console.log("new message",data);
+   // const { chatId, message } = data;
+    io.to(data.chat).emit("message", data);
+    //console.log(`Message sent to room ${chatId} by ${socket.id}`);
+  });
+
+  socket.on("mark as seen", (data) => {
+    console.log("mark as seen",data);
+   // const { chatId, message } = data;
+  io.to(data.chat).emit("seen", data);
+    //console.log(`Message sent to room ${chatId} by ${socket.id}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
+    // Perform cleanup if needed
+  });
+});

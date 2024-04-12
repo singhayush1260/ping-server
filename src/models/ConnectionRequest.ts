@@ -16,8 +16,8 @@ const connectionRequestSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "accepted", "declined"],
-      default: "pending",
+      enum: ["Pending", "Accepted", "Declined"],
+      default: "Pending",
     },
   },
   {

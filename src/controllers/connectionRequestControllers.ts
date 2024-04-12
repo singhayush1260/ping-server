@@ -3,7 +3,6 @@ import User from "../models/User";
 import ConnectionRequest from "../models/ConnectionRequest";
 
 export const sendConnectionRequest = async (req: Request, res: Response) => {
-  console.log("inside send con req---->>");
   const { userId: currentUserId } = req;
   const { receiverId } = req.body;
 
@@ -41,7 +40,6 @@ export const sendConnectionRequest = async (req: Request, res: Response) => {
     });
 
     await connectionRequest.save();
-    console.log("con req sent", connectionRequest);
     res.status(201).json({
       message: "Connection request sent successfully.",
       connectionRequest,
@@ -53,22 +51,15 @@ export const sendConnectionRequest = async (req: Request, res: Response) => {
 };
 
 export const acceptConnectionRequest = async (req: Request, res: Response) => {
-  console.log("inside accept con req---->>");
   const { connectionRequest } = req.body;
   const { sender: senderId, receiver: receiverId } = connectionRequest;
-
-  console.log("connection req", connectionRequest);
-
   try {
     const sender = await User.findById(senderId._id);
     if (!sender) {
-      console.log("sender not found", sender);
       return res.status(404).json({ message: "Sender not found." });
     }
-
     const receiver = await User.findById(receiverId);
     if (!receiver) {
-      console.log("receiver not found", receiver);
       return res.status(404).json({ message: "Receiver not found." });
     }
     sender.connections.push(receiver._id);
@@ -82,7 +73,7 @@ export const acceptConnectionRequest = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Connection request not found." });
     }
 
-    connectionReq.status = "accepted";
+    connectionReq.status = "Accepted";
     await connectionReq.save();
 
     res
@@ -95,11 +86,7 @@ export const acceptConnectionRequest = async (req: Request, res: Response) => {
 };
 
 export const declineConnectionRequest = async (req: Request, res: Response) => {
-  console.log("inside decline con req---->>");
   const { connectionRequest: connectionRequestId } = req.body;
-
-  console.log("connection request", connectionRequestId);
-
   try {
     const connectionRequest = await ConnectionRequest.findById(
       connectionRequestId._id
@@ -107,7 +94,7 @@ export const declineConnectionRequest = async (req: Request, res: Response) => {
     if (!connectionRequest) {
       return res.status(404).json({ message: "Connection request not found." });
     }
-    connectionRequest.status = "declined";
+    connectionRequest.status = "Declined";
     await connectionRequest.save();
 
     res.status(200).json({ message: "Connection request declined." });

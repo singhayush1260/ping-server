@@ -23,10 +23,11 @@ export const createChat = async (req: Request, res: Response) => {
     console.log("combined error from create chat validation", combinedMessage);
     return res.status(400).json({ message: combinedMessage });
   }
+
   const { userId: currentUserId } = req;
   const { userIds, isGroup, name } = req.body;
   const thumbnail = req.file as Express.Multer.File;
-  
+
   try {
     if (!JSON.parse(isGroup)) {
       const otherUserId = userIds[0];
@@ -39,23 +40,28 @@ export const createChat = async (req: Request, res: Response) => {
       });
       if (existingChat.length > 0) {
         console.log("chat already exists");
-        return res.status(200).json({chat:existingChat[0]});
-        //return res.status(200).json({ data:{mesage:"Chat already exists.",chat:existingChat[0]} });
+        return res.status(200).json(existingChat[0]);
       }
     }
-    
+
     userIds.unshift(currentUserId);
-    
-    let thumbnailUrl: string = "";
+
+    let thumbnailUrl: string = JSON.parse(isGroup) ? process.env.DEFAULT_GROUP_THUMBNAIL as string:"";
     if (thumbnail) {
       thumbnailUrl = await uploadToCloudinary(thumbnail);
     }
-    
+
+    let adminId: string | undefined = undefined;
+    if (JSON.parse(isGroup)) {
+      adminId = currentUserId; // Set currentUserId as the admin if it's a group chat
+    }
+
     const chat = await Chat.create({
       isGroup: JSON.parse(isGroup),
       name,
       thumbnail: thumbnailUrl,
       users: userIds,
+      admin: adminId,
     });
 
     for (const userId of userIds) {
@@ -69,6 +75,7 @@ export const createChat = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Something went wrong" });
   }
 };
+
 
 
 export const getAllChats = async (req: Request, res: Response) => {
@@ -102,8 +109,6 @@ export const getAllChats = async (req: Request, res: Response) => {
   }
 };
 
-
-
 export const getChatById = async (req: Request, res: Response) => {
   const {userId:currentUserId}=req;
   const { chatId } = req.params;
@@ -111,12 +116,13 @@ export const getChatById = async (req: Request, res: Response) => {
     const chat = await Chat.findOne({ _id: chatId }).populate(
       "users",
       "-password"
-    );
+    ).populate("admin");
     let formattedChat:any={_id:chat?._id,isGroup:chat?.isGroup,createdAt:chat?.createdAt};
     if(chat?.isGroup){
       formattedChat.thumbnail=chat.thumbnail;
       formattedChat.name=chat.name;
       formattedChat.users=chat.users;
+      formattedChat.admin=chat.admin;
     }
     else{
       const otherUser:any = chat?.users.filter((user) => user._id.toString() !== currentUserId)[0];
@@ -132,20 +138,37 @@ export const getChatById = async (req: Request, res: Response) => {
 };
 
 export const editGroupById = async (req: Request, res: Response) => {
-  const { chatId,newName } = req.body;
+  console.log("edit group by id", req.body);
+  const { userId: currentUserId } = req;
+  const { chatId, newName, removeThumbnail, newMembers, memberId } = req.body;
   const newThumbnail = req.file as Express.Multer.File;
   try {
-    if(newThumbnail){
-    const  newThumbnailUrl=await uploadToCloudinary(newThumbnail);
-      const updatedGroup=await Chat.findByIdAndUpdate(chatId,{
-        thumbnail:newThumbnailUrl
-      },{new:true});
-      return res.status(201).json({chat:updatedGroup});
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
     }
-    const updatedGroup=await Chat.findByIdAndUpdate(chatId,{
-      name:newName
-    },{new:true});
-    return res.status(201).json({chat:updatedGroup});
+    if (!chat.admin || !chat.admin.equals(currentUserId)) {
+      return res.status(403).json({ message: "You are not authorized to perform this action" });
+    }
+    let update: any = {};
+    if (removeThumbnail && JSON.parse(removeThumbnail)) {
+      console.log("Removing thumbnail");
+      update = { thumbnail: process.env.DEFAULT_GROUP_THUMBNAIL as string };
+    } else if (newThumbnail) {
+      const newThumbnailUrl = await uploadToCloudinary(newThumbnail);
+      update = { thumbnail: newThumbnailUrl };
+    } else if (newName) {
+      update = { name: newName };
+    } else if (newMembers && newMembers.length > 0) {
+      console.log("new members", newMembers);
+      update = { $addToSet: { users: { $each: newMembers } } };
+    } else if (memberId) {
+      console.log("member id removed", memberId);
+      update = { $pull: { users: memberId } };
+    }
+
+    const updatedGroup = await Chat.findByIdAndUpdate(chatId, update, { new: true });
+    return res.status(201).json({ chat: updatedGroup });
   } catch (error) {
     console.log("Error while updating group", error);
     res.status(500).json({ message: "Something went wrong" });
@@ -153,9 +176,17 @@ export const editGroupById = async (req: Request, res: Response) => {
 };
 
 
-
 export const deleteChatById = async (req: Request, res: Response) => {
-  const { chatId } = req.params;
+  console.log("delete chat by ID",req.body)
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const combinedMessage = errors.array().reduce((accumulator, currentMessage) => {
+      return accumulator + currentMessage.msg + '\n';
+    }, '');
+    console.log("combined error from create chat validation", combinedMessage);
+    return res.status(400).json({ message: combinedMessage });
+  }
+  const { chatId } = req.body;
   try {
     const deletedChat=await Chat.findByIdAndDelete(chatId);
     console.log("deleted chat",deletedChat);

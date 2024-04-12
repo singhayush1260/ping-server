@@ -1,5 +1,5 @@
 import express,{Request,Response} from "express";
-import { signup, login, logout } from "../controllers/authControllers";
+import { signup, login, logout, changePassword } from "../controllers/authControllers";
 import { check } from "express-validator";
 import verifyToken from "../middleware/auth";
 
@@ -33,6 +33,9 @@ router.post(
   ],
   login
 );
+
+router.patch("/change-password",verifyToken,changePassword);
+
 
 router.post("/logout",logout);
 

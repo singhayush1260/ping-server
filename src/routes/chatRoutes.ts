@@ -60,9 +60,7 @@ router.get("/", verifyToken, getAllChats);
 router.get("/:chatId",[param("chatId").notEmpty().withMessage("Chat ID is required")] ,verifyToken, getChatById);
 
 
-
-
-router.delete("/:chatId",verifyToken,[param("chatId").notEmpty().withMessage("Chat ID is required")],deleteChatById);
+router.delete("/",verifyToken,[body("chatId").notEmpty().withMessage("Chat ID is required")],deleteChatById);
 
 router.use(multerErrorHandler);
 

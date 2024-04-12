@@ -12,6 +12,7 @@ const chatSchema = new Schema(
     },
     thumbnail: {
       type: String,
+      default:"http://res.cloudinary.com/dgebufhgh/image/upload/v1712593635/hyusglzxpkunf9rrlwhv.png"
     },
     lastMessage: {
       type: Schema.Types.ObjectId,
@@ -36,6 +37,8 @@ const chatSchema = new Schema(
   },
   { timestamps: true }
 );
+
+
 
 const Chat = mongoose.model("Chat", chatSchema);
 

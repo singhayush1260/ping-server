@@ -86,6 +86,31 @@ export const login = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Something went wrong!" });
   }
 };
+
+export const changePassword = async (req:Request, res:Response) => {
+  console.log("inside change password");
+  const { userId: currentUserId } = req;
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    const user = await User.findById(currentUserId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!passwordMatch) {
+      return res.status(401).json({ message: "Incorrect old password" });
+    }
+    user.password = newPassword;
+    await user.save();
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+
 export const logout=(req:Request, res:Response)=>{
     res.cookie("auth_token","",{
       expires:new Date(0)

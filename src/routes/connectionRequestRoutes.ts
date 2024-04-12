@@ -1,5 +1,4 @@
 import express from "express";
-import { check } from "express-validator";
 import verifyToken from "../middleware/auth";
 import { acceptConnectionRequest, declineConnectionRequest, getAllConnectionRequests, sendConnectionRequest } from "../controllers/connectionRequestControllers";
 

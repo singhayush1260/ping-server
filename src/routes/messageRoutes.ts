@@ -25,8 +25,6 @@ router.post(
 
 router.post("/seen",verifyToken, [body("messageId").notEmpty().withMessage("Message ID is required")],markAsSeen);
 
-// router.post("/image",verifyToken,upload.single("image"),sendImage);
-
 router.get("/:chatId", verifyToken,getAllMessages);
 
 router.use(multerErrorHandler);
