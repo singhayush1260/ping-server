@@ -10,8 +10,10 @@ declare global {
 }
 
 const verifyToken = (req: Request, res: Response, next: NextFunction) => {
+  console.log("inside verify token")
   const token = req.cookies["auth_token"];
   if (!token) {
+    console.log("no token")
     return res.status(401).json({ message: "unauthorized" });
   }
 
@@ -20,6 +22,7 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
     req.userId = (decoded as JwtPayload).userId;
     next();
   } catch (error) {
+    console.log("inside auth middleware error")
     return res.status(401).json({ message: "unauthorized" });
   }
 };

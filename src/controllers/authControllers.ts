@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { validationResult } from "express-validator";
 
 export const signup = async (req: Request, res: Response) => {
+  console.log("inside signup")
   const errors = validationResult(req);
   const { name, email, password } = req.body;
   if (!errors.isEmpty()) {
@@ -37,16 +38,19 @@ export const signup = async (req: Request, res: Response) => {
       secure: process.env.NODE_ENV === "production",
       maxAge: 86400000,
     });
-
+    console.log("user registered signup")
     res.status(200).send({ message: "User registered OK" });
     return;
   } catch (error) {
+    console.log("inside signup")
     console.log("Something went wrong", error);
+    
     res.status(500).json({ message: "Something went wrong!" });
   }
 };
 
 export const login = async (req: Request, res: Response) => {
+  console.log("inside login")
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     console.log("error from login validation",errors.array());
