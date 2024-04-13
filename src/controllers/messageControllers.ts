@@ -56,6 +56,8 @@ export const sendMessage = async (req: Request, res: Response) => {
 
     await chat.save();
 
+    console.log("saved chat",chat);
+
     console.log("new message",newMessage);
 
     res.status(201).json(newMessage);
@@ -71,12 +73,12 @@ export const markAsSeen = async (req: Request, res: Response) => {
     return res.status(400).json({ errors: errors.array() });
   }
   const { messageId } = req.body;
-  const { userId } = req;
+  const { userId:currentUserId } = req;
 
   try {
     const updatedMessage = await Message.findByIdAndUpdate(
       messageId,
-      { $addToSet: { seenIds: userId } },
+      { $addToSet: { seenIds: currentUserId } },
       { new: true }
     );
 

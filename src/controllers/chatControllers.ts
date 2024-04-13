@@ -12,6 +12,7 @@ interface IFormattedChat {
   name?: string; 
   thumbnail?: string|undefined|null;
   users?: any[]; 
+  lastMessage:any;
 }
 
 export const createChat = async (req: Request, res: Response) => {
@@ -89,16 +90,18 @@ export const getAllChats = async (req: Request, res: Response) => {
     .sort({ updatedAt: -1 }); 
 
     const formattedChats:IFormattedChat[]=chats.map((chat)=>{  
-    let fChat:IFormattedChat={_id:chat._id,isGroup:chat.isGroup,createdAt:chat.createdAt};
+    let fChat:IFormattedChat={_id:chat._id,isGroup:chat.isGroup,createdAt:chat.createdAt,lastMessage:chat.lastMessage};
     if(chat.isGroup){
      fChat.thumbnail=chat.thumbnail;
      fChat.name=chat.name;
      fChat.users=chat.users;
+     fChat.lastMessage=chat.lastMessage
     }
     else{
       const otherUser:any = chat.users.filter((user) => user._id.toString() !== currentUserId)[0];
       fChat.name=otherUser?.name;
       fChat.thumbnail=otherUser?.profilePicture
+      fChat.lastMessage=chat?.lastMessage;
     }
     return fChat;
     });
@@ -186,16 +189,60 @@ export const deleteChatById = async (req: Request, res: Response) => {
     console.log("combined error from create chat validation", combinedMessage);
     return res.status(400).json({ message: combinedMessage });
   }
+  const{userId:currentUserId}=req;
   const { chatId } = req.body;
   try {
     const deletedChat=await Chat.findByIdAndDelete(chatId);
     console.log("deleted chat",deletedChat);
+    await User.findByIdAndUpdate(currentUserId, { $pull: { chats: chatId } });
     res.status(200).json({message:"Chat deleted"});
   } catch (error) {
     console.log("error in getChats", error);
     res.status(500).json({ message: "Something went wrong" });
   }
 };
+
+export const leaveGroup = async (req: Request, res: Response) => {
+  console.log("inside leave group", req.body);
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const combinedMessage = errors.array().reduce((accumulator, currentMessage) => {
+      return accumulator + currentMessage.msg + '\n';
+    }, '');
+    console.log("combined error from create chat validation", combinedMessage);
+    return res.status(400).json({ message: combinedMessage });
+  }
+
+  const { userId: currentUserId } = req;
+  const { chatId } = req.body;
+  
+  try {
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+
+    if (chat.admin?.toString() === currentUserId) {
+      const n = chat.users?.length || 0;
+      if (n > 1) {
+        chat.admin = chat.users[1];
+      } else {
+        chat.admin = null;
+      }
+    }
+    chat.users = (chat.users || []).filter(user => user._id?.toString() !== currentUserId);
+
+    await chat.save(); 
+
+    await User.findByIdAndUpdate(currentUserId, { $pull: { chats: chatId } });
+
+    res.status(200).json({ message: "Left the chat successfully" });
+  } catch (error) {
+    console.log("error in leaveGroup", error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
 
 
 

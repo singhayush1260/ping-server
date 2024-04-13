@@ -1,7 +1,7 @@
 import express from "express";
 import verifyToken from "../middleware/auth";
 import { body,param } from "express-validator";
-import {createChat, getChatById, getAllChats, deleteChatById, editGroupById} from "../controllers/chatControllers";
+import {createChat, getChatById, getAllChats, deleteChatById, editGroupById,leaveGroup} from "../controllers/chatControllers";
 import {multerErrorHandler} from "../middleware/multer-error";
 import multer from "multer";
 
@@ -59,6 +59,7 @@ router.get("/", verifyToken, getAllChats);
 
 router.get("/:chatId",[param("chatId").notEmpty().withMessage("Chat ID is required")] ,verifyToken, getChatById);
 
+router.put("/leave-group",verifyToken,[body("chatId").notEmpty().withMessage("Chat ID is required")],leaveGroup);
 
 router.delete("/",verifyToken,[body("chatId").notEmpty().withMessage("Chat ID is required")],deleteChatById);
 
