@@ -16,7 +16,7 @@ export const sendMessage = async (req: Request, res: Response) => {
   const { chatId, message, caption } = req.body;
   const file = req.file as Express.Multer.File;
   const currentUserId = req.userId;
-  console.log("request body",req.body);
+ // console.log("request body",req.body);
 
   try {
     const chat = await Chat.findOne({ _id: chatId });
@@ -56,9 +56,9 @@ export const sendMessage = async (req: Request, res: Response) => {
 
     await chat.save();
 
-    console.log("saved chat",chat);
+    //console.log("saved chat",chat);
 
-    console.log("new message",newMessage);
+    //console.log("new message",newMessage);
 
     res.status(201).json(newMessage);
   } catch (error) {

@@ -2,16 +2,16 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
-import { Server } from "socket.io";
 import {v2 as cloudinary} from "cloudinary";
 import connectDB from "./utils/connectDB";
-
+import useSocket from "./config/socket";
 // routes
 import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/userRoutes";
 import chatRoutes from "./routes/chatRoutes";
 import messageRoutes from "./routes/messageRoutes";
 import connectionRequestRoutes from "./routes/connectionRequestRoutes";
+
 
 console.log("process.env.NODE_ENV",process.env.NODE_ENV);
 
@@ -47,37 +47,39 @@ const server = app.listen(PORT, () => {
   console.log(`Server started at PORT ${PORT}`);
 });
 
-const io = new Server(server, {
-  pingTimeout: 60000,
-  cors: {
-    origin: process.env.CLIENT_URL as string,
-  },
-});
+useSocket(server, process.env.CLIENT_URL as string);
+// const io = new Server(server, {
+//   pingTimeout: 60000,
+//   cors: {
+//     origin: process.env.CLIENT_URL as string,
+//   },
+// });
 
-io.on("connection", (socket) => {
-  console.log("A user connected");
+// io.on("connection", (socket) => {
+//   console.log("A user connected");
+//   console.log(socket);
 
-  socket.on("join room", (chatId) => {
-    socket.join(chatId); // User joins the chat room
-    console.log(`User ${socket.id} joined room: ${chatId}`);
-  });
+//   socket.on("join room", (chatId) => {
+//     socket.join(chatId); // User joins the chat room
+//     //console.log(`User ${socket.id} joined room: ${chatId}`);
+//   });
 
-  socket.on("new message", (data) => {
-    console.log("new message",data);
-   // const { chatId, message } = data;
-    io.to(data.chat).emit("message", data);
-    //console.log(`Message sent to room ${chatId} by ${socket.id}`);
-  });
+//   socket.on("new message", (data) => {
+//     console.log("new message",data);
+//    // const { chatId, message } = data;
+//     io.to(data.chat).emit("message", data);
+//     //console.log(`Message sent to room ${chatId} by ${socket.id}`);
+//   });
 
-  socket.on("mark as seen", (data) => {
-    console.log("mark as seen",data);
-   // const { chatId, message } = data;
-  io.to(data.chat).emit("seen", data);
-    //console.log(`Message sent to room ${chatId} by ${socket.id}`);
-  });
+//   socket.on("mark as seen", (data) => {
+//     //console.log("mark as seen",data);
+//    // const { chatId, message } = data;
+//   io.to(data.chat).emit("seen", data);
+//     //console.log(`Message sent to room ${chatId} by ${socket.id}`);
+//   });
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
-    // Perform cleanup if needed
-  });
-});
+//   socket.on("disconnect", () => {
+//     console.log("User disconnected");
+//     // Perform cleanup if needed
+//   });
+// });

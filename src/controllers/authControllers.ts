@@ -97,6 +97,10 @@ export const changePassword = async (req:Request, res:Response) => {
   console.log("inside change password");
   const { userId: currentUserId } = req;
   const { currentPassword, newPassword } = req.body;
+  if(currentUserId===process.env.GUEST_USER_ID){
+    console.log("not allowed")
+    return res.status(401).json({ message: "Not allowed" });
+  }
 
   try {
     const user = await User.findById(currentUserId);

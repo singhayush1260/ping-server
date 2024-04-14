@@ -44,6 +44,10 @@ const userSchema = new Schema({
       ref: "Chat",
     },
   ],
+  isOnline:{
+    type:String,
+    default:"Ofline"
+  }
 },
 {
   timestamps: true,
