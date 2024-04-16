@@ -128,5 +128,8 @@ export const logout=(req:Request, res:Response)=>{
       secure: process.env.NODE_ENV === "production",
       maxAge: 1,
     });
-    res.send();
+    setTimeout(()=>{
+      res.send();
+    },1000)
+    
   }

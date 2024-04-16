@@ -12,7 +12,7 @@ interface IFormattedChat {
   name?: string; 
   thumbnail?: string|undefined|null;
   users?: any[]; 
-  lastMessage:any;
+  messages:any[];
 }
 
 export const createChat = async (req: Request, res: Response) => {
@@ -86,22 +86,20 @@ export const getAllChats = async (req: Request, res: Response) => {
       users: { $elemMatch: { $eq: currentUserId } },
     })
     .populate("users", "-password")
-    .populate("lastMessage")
+    .populate("messages","seenIds body image createdAt")
     .sort({ updatedAt: -1 }); 
 
     const formattedChats:IFormattedChat[]=chats.map((chat)=>{  
-    let fChat:IFormattedChat={_id:chat._id,isGroup:chat.isGroup,createdAt:chat.createdAt,lastMessage:chat.lastMessage};
+    let fChat:IFormattedChat={_id:chat._id,isGroup:chat.isGroup,createdAt:chat.createdAt,messages:chat.messages};
     if(chat.isGroup){
      fChat.thumbnail=chat.thumbnail;
      fChat.name=chat.name;
      fChat.users=chat.users;
-     fChat.lastMessage=chat.lastMessage
     }
     else{
       const otherUser:any = chat.users.filter((user) => user._id.toString() !== currentUserId)[0];
       fChat.name=otherUser?.name;
       fChat.thumbnail=otherUser?.profilePicture
-      fChat.lastMessage=chat?.lastMessage;
     }
     return fChat;
     });

@@ -13,6 +13,7 @@ const useSocket = (server: HttpServer, clientURL: string): Server => {
   io.on("connection", (socket: Socket) => {
     console.log("A user connected");
     let userIdGlobal:string;
+    socket.emit("server ready",true);
     try {
         socket.on("mark online",async(userId:string)=>{
             console.log("mark online event",userId)
